@@ -6,7 +6,8 @@ on:
       - main
     paths-ignore:
       - 'k8s/**'
-
+      - 'README.md'
+      
 jobs:
   build-and-update:
     runs-on: ubuntu-latest
