@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: cpu-analysis
+spec:
+  metrics:
+  - name: cpu-utilization
+    interval: 30s
+    successCondition: result[0] < 80
+    failureLimit: 4
+    count: 10
+    provider:
+      cloudWatch:
+        interval: 5m
+        metricDataQueries:
+        - id: cpu
+          metricStat:
+            metric:
+              namespace: ContainerInsights
+              metricName: pod_cpu_utilization
+              dimensions:
+              - name: ClusterName
+                value: my-cluster
+              - name: Namespace
+                value: default
+              - name: ContainerName
+                value: blue-green-demo
+            period: 60
+            stat: Average
+        region: ap-south-1
