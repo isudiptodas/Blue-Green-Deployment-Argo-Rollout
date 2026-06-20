@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: blue-green-demo
-        image: isudiptodas/blue-green-demo:1
+        image: isudiptodas/blue-green-demo:2
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
