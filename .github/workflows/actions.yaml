@@ -1,0 +1,56 @@
+name: Build and Push
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'k8s/**'
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.IMAGE_TAG }}:${{ github.run_number }} .
+
+      - name: Push image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.IMAGE_TAG }}:${{ github.run_number }}
+
+      - name: Logout from Docker Hub
+        run: docker logout
+
+      - name: Update rollout.yaml
+        run: |
+          sed -i "s|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.IMAGE_TAG }}:${{ github.run_number }}|g" k8s/rollout.yaml
+
+      - name: Commit and push manifest
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}01@outlook.com"
+          git add k8s/rollout.yaml
+          git commit -m "Update image tag to ${{ github.run_number }} [skip ci]"
+          git push
